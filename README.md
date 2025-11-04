@@ -11,39 +11,66 @@ A platform that empowers women in rural areas by providing skill development res
 
 ## Technology Stack
 
+### Frontend
 - React 18
 - Vite
 - React Router
 - Lucide React (icons)
 
+### Backend
+- Node.js
+- Express.js
+- MongoDB (MongoDB Atlas - Free Tier)
+- JWT Authentication
+
 ## Installation
 
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd SheRises
-```
+### 1. Backend Setup
 
-2. Install dependencies
 ```bash
+cd server
 npm install
 ```
 
-3. Start the development server
+Create `server/.env` file:
+```env
+MONGODB_URI=your-mongodb-connection-string
+JWT_SECRET=your-secret-key
+PORT=3000
+NODE_ENV=development
+```
+
+Start backend:
 ```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+### 2. Frontend Setup
+
+```bash
+npm install
+```
+
+Create `.env` file (optional):
+```env
+VITE_API_BASE_URL=http://localhost:3000/api
+```
+
+Start frontend:
+```bash
+npm run dev
+```
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
+### Frontend
+- `npm run dev` - Start frontend development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
+
+### Backend
+- `cd server && npm run dev` - Start backend server
 
 ## License
 
 MIT License - see LICENSE file for details
-

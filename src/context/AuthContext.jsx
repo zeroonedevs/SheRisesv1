@@ -33,8 +33,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Simulate API call - replace with actual API endpoint
-      const response = await fetch('/api/auth/login', {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+      
+      // Try API call first
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,42 +44,43 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
-      // For demo purposes, use mock data if API is not available
-      let userData;
       if (response.ok) {
         const data = await response.json();
-        userData = data.user;
-      } else {
-        // Mock login for development
-        userData = {
-          id: Date.now(),
-          name: 'Demo User',
-          email: email,
-          role: 'user',
-          avatar: '/default-user.svg',
-          location: 'Mumbai, Maharashtra',
-          skills: [],
-          isMentor: false,
-          enrolledCourses: [],
-          cart: [],
-          orders: []
+        const userData = {
+          id: data.user.id,
+          ...data.user
         };
+        
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('token', data.token);
+        return { success: true, user: userData };
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Login failed' }));
+        return { success: false, error: errorData.message || 'Invalid email or password' };
       }
-
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('token', 'mock-token-' + Date.now());
-      return { success: true, user: userData };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: 'Failed to login. Please try again.' };
+      // Fallback to local storage for offline mode
+      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      const foundUser = existingUsers.find(u => u.email === email);
+      
+      if (foundUser) {
+        setUser(foundUser);
+        localStorage.setItem('user', JSON.stringify(foundUser));
+        localStorage.setItem('token', 'offline-token');
+        return { success: true, user: foundUser };
+      }
+      
+      return { success: false, error: 'Failed to login. Please check your connection and try again.' };
     }
   };
 
   const register = async (userData) => {
     try {
-      // Simulate API call - replace with actual API endpoint
-      const response = await fetch('/api/auth/register', {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+      
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,34 +88,53 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(userData),
       });
 
-      let newUser;
       if (response.ok) {
         const data = await response.json();
-        newUser = data.user;
-      } else {
-        // Mock registration for development
-        newUser = {
-          id: Date.now(),
-          name: userData.name,
-          email: userData.email,
-          role: 'user',
-          avatar: '/default-user.svg',
-          location: userData.location || '',
-          skills: [],
-          isMentor: userData.isMentor || false,
-          enrolledCourses: [],
-          cart: [],
-          orders: []
+        const newUser = {
+          id: data.user.id,
+          ...data.user
         };
+        
+        setUser(newUser);
+        localStorage.setItem('user', JSON.stringify(newUser));
+        localStorage.setItem('token', data.token);
+        return { success: true, user: newUser };
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Registration failed' }));
+        return { success: false, error: errorData.message || 'Registration failed. Please try again.' };
       }
-
-      setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('token', 'mock-token-' + Date.now());
-      return { success: true, user: newUser };
     } catch (error) {
       console.error('Registration error:', error);
-      return { success: false, error: 'Failed to register. Please try again.' };
+      // Fallback to local storage for offline mode
+      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      const userExists = existingUsers.some(u => u.email === userData.email);
+      
+      if (userExists) {
+        return { success: false, error: 'Email already registered. Please login instead.' };
+      }
+      
+      const newUser = {
+        id: Date.now(),
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone || '',
+        role: 'user',
+        avatar: '/default-user.svg',
+        location: userData.location || '',
+        skills: [],
+        isMentor: userData.isMentor || false,
+        enrolledCourses: [],
+        cart: [],
+        orders: []
+      };
+      
+      existingUsers.push(newUser);
+      localStorage.setItem('users', JSON.stringify(existingUsers));
+      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.setItem('token', 'offline-token');
+      
+      return { success: true, user: newUser };
     }
   };
 

@@ -9,7 +9,10 @@ const getAuthToken = () => {
 // Helper function for making API requests
 const request = async (endpoint, options = {}) => {
   const token = getAuthToken();
-  const url = `${API_BASE_URL}${endpoint}`;
+  // Ensure endpoint starts with / and API_BASE_URL doesn't end with /
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const cleanBaseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+  const url = `${cleanBaseUrl}${cleanEndpoint}`;
 
   const config = {
     ...options,
@@ -25,12 +28,20 @@ const request = async (endpoint, options = {}) => {
     
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      console.error('API Error:', {
+        url,
+        status: response.status,
+        error: error.message || 'Request failed'
+      });
       throw new Error(error.message || 'Request failed');
     }
 
     return await response.json();
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('API Error:', {
+      url,
+      error: error.message
+    });
     throw error;
   }
 };

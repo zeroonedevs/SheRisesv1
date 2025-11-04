@@ -1,6 +1,6 @@
 /* Checkout Page Styles */
 .checkout {
-  padding: 2rem 0 4rem;
+  padding: 2rem 24px 4rem;
   background: #ffffff;
   min-height: calc(100vh - 200px);
 }
@@ -142,6 +142,21 @@
   font-weight: 600;
   margin-bottom: 1.5rem;
   color: var(--dark-text);
+}
+
+.form-section h2 svg {
+  color: var(--primary-color);
+  stroke: var(--primary-color);
+}
+
+.form-group label svg {
+  color: var(--primary-color);
+  stroke: var(--primary-color);
+}
+
+.payment-option-content svg {
+  color: var(--primary-color);
+  stroke: var(--primary-color);
 }
 
 .form-grid {

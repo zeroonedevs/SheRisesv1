@@ -1,6 +1,6 @@
 /* Messages Page Styles */
 .messages-page {
-  padding: 2rem 0 4rem;
+  padding: 2rem 24px 4rem;
   background: #ffffff;
   min-height: calc(100vh - 200px);
 }
