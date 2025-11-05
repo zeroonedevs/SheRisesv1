@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { orders } from '../utils/orders';
+import { marketplaceAPI } from '../utils/api';
 import {
   ShoppingBag,
   Package,
@@ -20,12 +20,25 @@ const Orders = () => {
   const [userOrders, setUserOrders] = useState([]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-    const myOrders = orders.getByUserId(user.id);
-    setUserOrders(myOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+    const loadOrders = async () => {
+      if (!isAuthenticated) {
+        navigate('/login');
+        return;
+      }
+      
+      try {
+        const response = await marketplaceAPI.getOrders();
+        if (response.success) {
+          setUserOrders(response.orders || []);
+        }
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        // Fallback to empty array
+        setUserOrders([]);
+      }
+    };
+    
+    loadOrders();
   }, [isAuthenticated, user, navigate]);
 
   const getStatusColor = (status) => {
@@ -87,7 +100,7 @@ const Orders = () => {
               <div key={order.id} className="order-card">
                 <div className="order-header">
                   <div className="order-info">
-                    <h3>Order #{order.id}</h3>
+                    <h3>Order #{order._id || order.id}</h3>
                     <p className="order-date">
                       Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -99,22 +112,22 @@ const Orders = () => {
                   <div className="order-status">
                     <span
                       className="status-badge"
-                      style={{ backgroundColor: getStatusColor(order.orderStatus) }}
+                      style={{ backgroundColor: getStatusColor(order.orderStatus?.toLowerCase() || 'pending') }}
                     >
-                      {getStatusIcon(order.orderStatus)}
-                      {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
+                      {getStatusIcon(order.orderStatus?.toLowerCase() || 'pending')}
+                      {(order.orderStatus || 'Pending').charAt(0).toUpperCase() + (order.orderStatus || 'Pending').slice(1)}
                     </span>
                   </div>
                 </div>
 
                 <div className="order-items">
-                  {order.items.map((item, index) => (
+                  {order.items?.map((item, index) => (
                     <div key={index} className="order-item">
-                      <img src={item.image || '/default-user.svg'} alt={item.name} />
+                      <img src={item.image || item.product?.images?.[0] || '/default-user.svg'} alt={item.name} />
                       <div className="item-details">
-                        <h4>{item.name}</h4>
+                        <h4>{item.name || item.product?.name}</h4>
                         <p>Quantity: {item.quantity}</p>
-                        <p className="item-price">₹{(item.price * item.quantity).toLocaleString()}</p>
+                        <p className="item-price">₹{((item.price || 0) * (item.quantity || 1)).toLocaleString()}</p>
                       </div>
                     </div>
                   ))}

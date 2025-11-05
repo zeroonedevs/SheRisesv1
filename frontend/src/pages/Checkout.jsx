@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { storage } from '../utils/localStorage';
-import { orders } from '../utils/orders';
+import { marketplaceAPI } from '../utils/api';
 import {
   ShoppingCart,
   MapPin,
@@ -68,7 +68,7 @@ const Checkout = () => {
     setShippingInfo(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     // Validation
     if (!shippingInfo.fullName || !shippingInfo.phone || !shippingInfo.address || 
         !shippingInfo.city || !shippingInfo.state || !shippingInfo.pincode) {
@@ -76,37 +76,38 @@ const Checkout = () => {
       return;
     }
 
-    // Create order
-    const newOrder = orders.create({
-      userId: user.id,
-      userName: user.name,
-      items: cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity || 1,
-        image: item.image,
-        sellerId: item.sellerId || 'seller1',
-        seller: item.seller || 'Unknown Seller'
-      })),
-      totalAmount: total,
-      shippingAddress: {
-        fullName: shippingInfo.fullName,
-        phone: shippingInfo.phone,
-        address: shippingInfo.address,
-        city: shippingInfo.city,
-        state: shippingInfo.state,
-        pincode: shippingInfo.pincode,
-        landmark: shippingInfo.landmark
-      },
-      paymentMethod: paymentMethod
-    });
+    try {
+      // Create order via API
+      const response = await marketplaceAPI.checkout({
+        items: cart.map(item => ({
+          productId: item.id,
+          quantity: item.quantity || 1
+        })),
+        shippingAddress: {
+          fullName: shippingInfo.fullName,
+          phone: shippingInfo.phone,
+          address: shippingInfo.address,
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          pincode: shippingInfo.pincode,
+          landmark: shippingInfo.landmark || ''
+        },
+        paymentMethod: paymentMethod
+      });
 
-    // Clear cart
-    storage.clearCart();
-    
-    setOrderId(newOrder.id);
-    setOrderPlaced(true);
+      if (response.success) {
+        // Clear cart
+        storage.clearCart();
+        
+        setOrderId(response.order._id || response.order.id);
+        setOrderPlaced(true);
+      } else {
+        alert(response.message || 'Failed to place order');
+      }
+    } catch (error) {
+      console.error('Place order error:', error);
+      alert('Failed to place order. Please try again.');
+    }
   };
 
   if (orderPlaced) {

@@ -132,8 +132,10 @@ const Skills = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const enrolled = storage.getEnrolledCourses();
+      const enrolled = storage.getEnrolledCourses(user.id);
       setEnrolledCourses(enrolled);
+    } else {
+      setEnrolledCourses([]);
     }
   }, [isAuthenticated, user]);
 
@@ -142,8 +144,12 @@ const Skills = () => {
       alert('Please login to enroll in courses');
       return;
     }
-    storage.enrollInCourse(course);
-    setEnrolledCourses(storage.getEnrolledCourses());
+    if (!user || !user.id) {
+      alert('User information not available. Please login again.');
+      return;
+    }
+    storage.enrollInCourse(course, user.id);
+    setEnrolledCourses(storage.getEnrolledCourses(user.id));
   };
 
   const isEnrolled = (courseId) => {

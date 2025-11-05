@@ -148,12 +148,14 @@ const CourseContent = () => {
     }
 
     // Load completed lessons
-    const enrolled = storage.getEnrolledCourses();
-    const courseEnrolled = enrolled.find(c => c.id === parseInt(id));
-    if (courseEnrolled && courseEnrolled.completedLessons) {
-      setCompletedLessons(courseEnrolled.completedLessons);
+    if (isAuthenticated && user && user.id) {
+      const enrolled = storage.getEnrolledCourses(user.id);
+      const courseEnrolled = enrolled.find(c => c.id === parseInt(id));
+      if (courseEnrolled && courseEnrolled.completedLessons) {
+        setCompletedLessons(courseEnrolled.completedLessons);
+      }
     }
-  }, [id]);
+  }, [id, isAuthenticated, user]);
 
   const handleLessonComplete = (lessonId) => {
     if (!isAuthenticated) {
@@ -161,18 +163,23 @@ const CourseContent = () => {
       return;
     }
 
+    if (!user || !user.id) {
+      alert('User information not available. Please login again.');
+      return;
+    }
+
     if (!completedLessons.includes(lessonId)) {
       const updated = [...completedLessons, lessonId];
       setCompletedLessons(updated);
 
-      // Update in storage
-      const enrolled = storage.getEnrolledCourses();
+      // Update in storage with user ID
+      const enrolled = storage.getEnrolledCourses(user.id);
       const courseIndex = enrolled.findIndex(c => c.id === parseInt(id));
       if (courseIndex > -1) {
         enrolled[courseIndex].completedLessons = updated;
         const progress = Math.round((updated.length / course.lessons.length) * 100);
         enrolled[courseIndex].progress = progress;
-        storage.setEnrolledCourses(enrolled);
+        storage.setEnrolledCourses(enrolled, user.id);
       }
     }
   };

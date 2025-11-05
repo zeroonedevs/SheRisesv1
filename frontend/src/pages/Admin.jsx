@@ -20,9 +20,10 @@ import {
   XCircle,
   Store
 } from 'lucide-react';
-import { sellerApplications } from '../utils/sellerApplications';
-import { forum } from '../utils/forum';
+import { sellerApplicationsAPI, communityAPI } from '../utils/api';
 import { contentCMS } from '../utils/contentCMS';
+import { forum } from '../utils/forum';
+import { sellerApplications } from '../utils/sellerApplications';
 import './Admin.css';
 
 const Admin = () => {
@@ -56,23 +57,78 @@ const Admin = () => {
     setLoginError('');
     setIsLoading(true);
     
-    // Simulate API call delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // ⚠️ SECURITY: In production, remove hardcoded credentials!
-    // This should be replaced with a secure API call to backend
-    // For now, using environment variable or secure config
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || '';
-    const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || '';
-    
-    if (adminEmail && adminPassword && loginForm.username === adminEmail && loginForm.password === adminPassword) {
-      setShowSuccess(true);
-      setTimeout(() => {
-        setIsLoggedIn(true);
-        setShowSuccess(false);
-      }, 600);
-    } else {
-      setLoginError('Invalid username or password');
+    try {
+      // Try to authenticate with backend first
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: loginForm.username,
+            password: loginForm.password
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Check if user is admin
+          if (data.user && data.user.role === 'admin') {
+            // Store token for API calls
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('admin_user', JSON.stringify(data.user));
+            setShowSuccess(true);
+            setTimeout(() => {
+              setIsLoggedIn(true);
+              setShowSuccess(false);
+            }, 600);
+            return;
+          } else {
+            setLoginError('Access denied. Admin privileges required.');
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (apiError) {
+        console.log('Backend auth failed, trying local credentials:', apiError);
+        // Fallback to local credentials if backend is not available
+      }
+
+      // Fallback: Check local credentials
+      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || '';
+      const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || '';
+      
+      // Demo credentials (for testing/demo purposes)
+      const DEMO_CREDENTIALS = {
+        email: 'admin@sherises.com',
+        password: 'admin123'
+      };
+      
+      // Check if credentials match
+      const isCustomAdmin = adminEmail && adminPassword && 
+        loginForm.username === adminEmail && 
+        loginForm.password === adminPassword;
+      
+      const isDemoAdmin = loginForm.username === DEMO_CREDENTIALS.email && 
+        loginForm.password === DEMO_CREDENTIALS.password;
+      
+      if (isCustomAdmin || isDemoAdmin) {
+        // For local admin, we still need to handle API calls
+        // Note: This will work for viewing but may fail for approvals if backend requires auth
+        setShowSuccess(true);
+        setTimeout(() => {
+          setIsLoggedIn(true);
+          setShowSuccess(false);
+        }, 600);
+      } else {
+        setLoginError('Invalid username or password');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError('Login failed. Please try again.');
       setIsLoading(false);
     }
   };
@@ -81,6 +137,9 @@ const Admin = () => {
     setIsLoggedIn(false);
     setLoginForm({ username: '', password: '' });
     setActiveTab('dashboard');
+    // Clear admin token
+    localStorage.removeItem('token');
+    localStorage.removeItem('admin_user');
   };
 
   const tabs = [
@@ -96,31 +155,122 @@ const Admin = () => {
 
   // Load seller applications when sellers tab is active
   useEffect(() => {
-    if (activeTab === 'sellers') {
-      setSellerApps(sellerApplications.getAll());
-    }
-    if (activeTab === 'moderation') {
-      setReportedPosts(forum.getReportedPosts());
-    }
-    if (activeTab === 'content') {
-      setAwarenessArticles(contentCMS.getAll());
-    }
-  }, [activeTab]);
+    const loadData = async () => {
+      if (activeTab === 'sellers') {
+        try {
+          const response = await sellerApplicationsAPI.getAll();
+          if (response.success && response.applications) {
+            // Transform applications to ensure consistent ID format
+            const transformedApps = response.applications.map(app => ({
+              ...app,
+              id: app._id || app.id,
+              _id: app._id || app.id
+            }));
+            setSellerApps(transformedApps);
+          } else {
+            console.warn('No applications returned from API');
+            setSellerApps([]);
+          }
+        } catch (error) {
+          console.error('Error loading seller applications:', error);
+          // Check if it's an auth error
+          if (error.message?.includes('401') || error.message?.includes('403')) {
+            alert('Authentication failed. Please login again as admin.');
+            setIsLoggedIn(false);
+          }
+          // Fallback to localStorage
+          const apps = sellerApplications.getAll();
+          setSellerApps(apps);
+        }
+      }
+      if (activeTab === 'moderation') {
+        // TODO: Implement reported posts API endpoint
+        // For now, keep using localStorage
+        const reportedPosts = forum.getReportedPosts();
+        setReportedPosts(reportedPosts);
+      }
+      if (activeTab === 'content') {
+        setAwarenessArticles(contentCMS.getAll());
+      }
+    };
+    
+    loadData();
+  }, [activeTab, isLoggedIn]);
 
-  const handleApproveSeller = (appId) => {
-    if (window.confirm('Are you sure you want to approve this seller application?')) {
-      sellerApplications.approve(appId, 'Admin');
-      setSellerApps(sellerApplications.getAll());
-      setSelectedApp(null);
+  const handleApproveSeller = async (appId) => {
+    if (!appId) {
+      alert('Invalid application ID');
+      return;
+    }
+
+    if (window.confirm('Are you sure you want to approve this seller application? The user will become a seller.')) {
+      try {
+        const response = await sellerApplicationsAPI.approve(appId);
+        if (response.success) {
+          // Reload applications
+          const updatedResponse = await sellerApplicationsAPI.getAll();
+          if (updatedResponse.success && updatedResponse.applications) {
+            const transformedApps = updatedResponse.applications.map(app => ({
+              ...app,
+              id: app._id || app.id,
+              _id: app._id || app.id
+            }));
+            setSellerApps(transformedApps);
+          }
+          setSelectedApp(null);
+          alert('✅ Seller application approved successfully! The user is now a seller.');
+        } else {
+          alert(response.message || 'Failed to approve application');
+        }
+      } catch (error) {
+        console.error('Error approving application:', error);
+        const errorMsg = error.message || 'Failed to approve application.';
+        if (errorMsg.includes('401') || errorMsg.includes('403')) {
+          alert('Authentication failed. Please login again as admin.');
+          setIsLoggedIn(false);
+        } else {
+          alert(`Error: ${errorMsg}`);
+        }
+      }
     }
   };
 
-  const handleRejectSeller = (appId) => {
+  const handleRejectSeller = async (appId) => {
+    if (!appId) {
+      alert('Invalid application ID');
+      return;
+    }
+
     const reason = window.prompt('Please provide a reason for rejection:');
     if (reason) {
-      sellerApplications.reject(appId, 'Admin', reason);
-      setSellerApps(sellerApplications.getAll());
-      setSelectedApp(null);
+      try {
+        const response = await sellerApplicationsAPI.reject(appId, reason);
+        if (response.success) {
+          // Reload applications
+          const updatedResponse = await sellerApplicationsAPI.getAll();
+          if (updatedResponse.success && updatedResponse.applications) {
+            const transformedApps = updatedResponse.applications.map(app => ({
+              ...app,
+              id: app._id || app.id,
+              _id: app._id || app.id
+            }));
+            setSellerApps(transformedApps);
+          }
+          setSelectedApp(null);
+          alert('Seller application rejected.');
+        } else {
+          alert(response.message || 'Failed to reject application');
+        }
+      } catch (error) {
+        console.error('Error rejecting application:', error);
+        const errorMsg = error.message || 'Failed to reject application.';
+        if (errorMsg.includes('401') || errorMsg.includes('403')) {
+          alert('Authentication failed. Please login again as admin.');
+          setIsLoggedIn(false);
+        } else {
+          alert(`Error: ${errorMsg}`);
+        }
+      }
     }
   };
 
@@ -190,7 +340,7 @@ const Admin = () => {
 
   const stats = [
     { label: 'Total Users', value: '2,547', change: '+12%', icon: Users, color: '#e91e63' },
-    { label: 'Pending Seller Apps', value: sellerApplications.getPending().length.toString(), change: 'Review', icon: Store, color: '#ff9800' },
+    { label: 'Pending Seller Apps', value: sellerApps.filter(app => app.status === 'pending').length.toString(), change: 'Review', icon: Store, color: '#ff9800' },
     { label: 'Active Courses', value: '24', change: '+3', icon: BookOpen, color: '#9c27b0' },
     { label: 'Products Listed', value: '156', change: '+8', icon: ShoppingBag, color: '#ff4081' },
     { label: 'Total Revenue', value: '₹2.4L', change: '+18%', icon: TrendingUp, color: '#4caf50' }
@@ -305,6 +455,25 @@ const Admin = () => {
                 <a href="#" className="forgot-password">Forgot password?</a>
               </div>
 
+              {/* Demo Credentials Info */}
+              <div className="demo-credentials" style={{
+                marginTop: '1rem',
+                padding: '0.75rem',
+                backgroundColor: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                color: '#0369a1'
+              }}>
+                <strong>Demo Credentials:</strong>
+                <div style={{ marginTop: '0.5rem' }}>
+                  Email: <code>admin@sherises.com</code>
+                </div>
+                <div>
+                  Password: <code>admin123</code>
+                </div>
+              </div>
+
               <button type="submit" className="login-btn" disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -316,10 +485,6 @@ const Admin = () => {
                 )}
               </button>
             </form>
-
-            <div className="login-footer">
-              <p>Demo Credentials: <strong>admin</strong> / <strong>admin123</strong></p>
-            </div>
           </div>
         </div>
       </div>
@@ -433,7 +598,8 @@ const Admin = () => {
                                       alert('Edit user feature coming soon!');
                                     }}
                                   >
-                                    <Edit size={16} />
+                                    <Edit size={18} />
+                                    <span>Edit</span>
                                   </button>
                                   <span className="action-tooltip">Edit User</span>
                                 </div>
@@ -511,9 +677,10 @@ const Admin = () => {
                                 alert('Edit user feature coming soon!');
                               }}
                             >
-                              <Edit size={16} />
+                              <Edit size={18} />
+                              <span>Edit</span>
                             </button>
-                            <span className="action-tooltip">Edit</span>
+                            <span className="action-tooltip">Edit User</span>
                           </div>
                           <div className="action-btn-wrapper">
                             <button 
@@ -524,9 +691,10 @@ const Admin = () => {
                                 }
                               }}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} />
+                              <span>Delete</span>
                             </button>
-                            <span className="action-tooltip">Delete</span>
+                            <span className="action-tooltip">Delete User</span>
                           </div>
                         </div>
                         </td>
@@ -600,9 +768,10 @@ const Admin = () => {
                                 alert('Edit course feature coming soon!');
                               }}
                             >
-                              <Edit size={16} />
+                              <Edit size={18} />
+                              <span>Edit</span>
                             </button>
-                            <span className="action-tooltip">Edit</span>
+                            <span className="action-tooltip">Edit Course</span>
                           </div>
                           <div className="action-btn-wrapper">
                             <button 
@@ -613,9 +782,10 @@ const Admin = () => {
                                 }
                               }}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} />
+                              <span>Delete</span>
                             </button>
-                            <span className="action-tooltip">Delete</span>
+                            <span className="action-tooltip">Delete Course</span>
                           </div>
                         </div>
                         </td>
@@ -689,10 +859,11 @@ const Admin = () => {
                               </div>
                               <div className="action-btn-wrapper">
                                 <button
-                                  className="action-btn edit"
+                                  className="action-btn approve"
                                   onClick={() => handleDismissReport(post.id)}
                                 >
-                                  <CheckCircle size={16} />
+                                  <CheckCircle size={18} />
+                                  <span>Dismiss</span>
                                 </button>
                                 <span className="action-tooltip">Dismiss Reports</span>
                               </div>
@@ -701,7 +872,8 @@ const Admin = () => {
                                   className="action-btn delete"
                                   onClick={() => handleDeletePost(post.id)}
                                 >
-                                  <Trash2 size={16} />
+                                  <Trash2 size={18} />
+                                  <span>Delete</span>
                                 </button>
                                 <span className="action-tooltip">Delete Post</span>
                               </div>
@@ -732,19 +904,19 @@ const Admin = () => {
                     className={`filter-btn ${selectedApp === 'pending' ? 'active' : ''}`}
                     onClick={() => setSelectedApp('pending')}
                   >
-                    Pending ({sellerApplications.getPending().length})
+                    Pending ({sellerApps.filter(app => app.status === 'pending').length})
                   </button>
                   <button 
                     className={`filter-btn ${selectedApp === 'approved' ? 'active' : ''}`}
                     onClick={() => setSelectedApp('approved')}
                   >
-                    Approved ({sellerApplications.getApproved().length})
+                    Approved ({sellerApps.filter(app => app.status === 'approved').length})
                   </button>
                   <button 
                     className={`filter-btn ${selectedApp === 'rejected' ? 'active' : ''}`}
                     onClick={() => setSelectedApp('rejected')}
                   >
-                    Rejected ({sellerApplications.getRejected().length})
+                    Rejected ({sellerApps.filter(app => app.status === 'rejected').length})
                   </button>
                 </div>
               </div>
@@ -765,11 +937,11 @@ const Admin = () => {
                     {(() => {
                       let filteredApps = sellerApps;
                       if (selectedApp === 'pending') {
-                        filteredApps = sellerApplications.getPending();
+                        filteredApps = sellerApps.filter(app => app.status === 'pending');
                       } else if (selectedApp === 'approved') {
-                        filteredApps = sellerApplications.getApproved();
+                        filteredApps = sellerApps.filter(app => app.status === 'approved');
                       } else if (selectedApp === 'rejected') {
-                        filteredApps = sellerApplications.getRejected();
+                        filteredApps = sellerApps.filter(app => app.status === 'rejected');
                       }
                       
                       if (filteredApps.length === 0) {
@@ -783,8 +955,10 @@ const Admin = () => {
                         );
                       }
                       
-                      return filteredApps.map(app => (
-                        <tr key={app.id}>
+                      return filteredApps.map(app => {
+                        const appId = app._id || app.id;
+                        return (
+                        <tr key={appId}>
                           <td><strong>{app.businessName}</strong></td>
                           <td>
                             <div>
@@ -796,9 +970,9 @@ const Admin = () => {
                           </td>
                           <td style={{ textTransform: 'capitalize' }}>{app.businessType}</td>
                           <td style={{ maxWidth: '200px', fontSize: '0.9rem' }}>
-                            {app.address.length > 50 ? `${app.address.substring(0, 50)}...` : app.address}
+                            {(app.address || '').length > 50 ? `${app.address.substring(0, 50)}...` : app.address}
                           </td>
-                          <td>{new Date(app.submittedAt).toLocaleDateString()}</td>
+                          <td>{app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : 'N/A'}</td>
                           <td>
                             <span 
                               className="status-badge"
@@ -808,7 +982,7 @@ const Admin = () => {
                                   app.status === 'rejected' ? '#f44336' : '#ff9800'
                               }}
                             >
-                              {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                              {(app.status || 'pending').charAt(0).toUpperCase() + (app.status || 'pending').slice(1)}
                             </span>
                           </td>
                           <td>
@@ -817,40 +991,42 @@ const Admin = () => {
                                 <button 
                                   className="action-btn view"
                                   onClick={() => {
-                                    alert(`Business: ${app.businessName}\n\nApplicant: ${app.userName} (${app.userEmail})\nBusiness Type: ${app.businessType}\nAddress: ${app.address}\nGST: ${app.gstNumber || 'Not provided'}\nBank: ${app.bankAccount || 'Not provided'}\nIFSC: ${app.ifscCode || 'Not provided'}\nDescription: ${app.description || 'Not provided'}`);
+                                    alert(`Business: ${app.businessName}\n\nApplicant: ${app.userName} (${app.userEmail})\nBusiness Type: ${app.businessType}\nAddress: ${app.address || 'N/A'}\nGST: ${app.gstNumber || 'Not provided'}\nBank: ${app.bankAccount || 'Not provided'}\nIFSC: ${app.ifscCode || 'Not provided'}\nDescription: ${app.description || 'Not provided'}`);
                                   }}
                                 >
                                   <Eye size={16} />
                                 </button>
                                 <span className="action-tooltip">View Details</span>
                               </div>
-                              {app.status === 'pending' && (
+                              {(!app.status || app.status === 'pending') && (
                                 <>
                                   <div className="action-btn-wrapper">
                                     <button 
-                                      className="action-btn edit"
-                                      onClick={() => handleApproveSeller(app.id)}
-                                      style={{ backgroundColor: 'rgba(76, 175, 80, 0.1)', color: '#4caf50' }}
+                                      className="action-btn approve"
+                                      onClick={() => handleApproveSeller(appId)}
                                     >
-                                      <CheckCircle size={16} />
+                                      <CheckCircle size={18} />
+                                      <span>Approve</span>
                                     </button>
-                                    <span className="action-tooltip">Approve</span>
+                                    <span className="action-tooltip">Approve Application</span>
                                   </div>
                                   <div className="action-btn-wrapper">
                                     <button 
-                                      className="action-btn delete"
-                                      onClick={() => handleRejectSeller(app.id)}
+                                      className="action-btn reject"
+                                      onClick={() => handleRejectSeller(appId)}
                                     >
-                                      <XCircle size={16} />
+                                      <XCircle size={18} />
+                                      <span>Reject</span>
                                     </button>
-                                    <span className="action-tooltip">Reject</span>
+                                    <span className="action-tooltip">Reject Application</span>
                                   </div>
                                 </>
                               )}
                             </div>
                           </td>
                         </tr>
-                      ));
+                        );
+                      });
                     })()}
                   </tbody>
                 </table>
@@ -922,9 +1098,10 @@ const Admin = () => {
                                 alert('Edit product feature coming soon!');
                               }}
                             >
-                              <Edit size={16} />
+                              <Edit size={18} />
+                              <span>Edit</span>
                             </button>
-                            <span className="action-tooltip">Edit</span>
+                            <span className="action-tooltip">Edit Product</span>
                           </div>
                           <div className="action-btn-wrapper">
                             <button 
@@ -935,9 +1112,10 @@ const Admin = () => {
                                 }
                               }}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} />
+                              <span>Delete</span>
                             </button>
-                            <span className="action-tooltip">Delete</span>
+                            <span className="action-tooltip">Delete Product</span>
                           </div>
                         </div>
                         </td>
@@ -1026,18 +1204,20 @@ const Admin = () => {
                                 className="action-btn edit"
                                 onClick={() => handleEditArticle(item)}
                               >
-                                <Edit size={16} />
+                                <Edit size={18} />
+                                <span>Edit</span>
                               </button>
-                              <span className="action-tooltip">Edit</span>
+                              <span className="action-tooltip">Edit Article</span>
                             </div>
                             <div className="action-btn-wrapper">
                               <button 
                                 className="action-btn delete"
                                 onClick={() => handleDeleteArticle(item.id)}
                               >
-                                <Trash2 size={16} />
+                                <Trash2 size={18} />
+                                <span>Delete</span>
                               </button>
-                              <span className="action-tooltip">Delete</span>
+                              <span className="action-tooltip">Delete Article</span>
                             </div>
                           </div>
                           </td>

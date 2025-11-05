@@ -164,5 +164,92 @@ export const userAPI = {
   },
 };
 
-export default request;
+// Seller Applications API calls
+export const sellerApplicationsAPI = {
+  submit: (applicationData) => 
+    request('/seller-applications', {
+      method: 'POST',
+      body: JSON.stringify(applicationData),
+    }),
+  getMyApplication: () => request('/seller-applications/my-application'),
+  getAll: (status) => {
+    const query = status ? `?status=${status}` : '';
+    return request(`/seller-applications${query}`);
+  },
+  getById: (id) => request(`/seller-applications/${id}`),
+  approve: (id) => 
+    request(`/seller-applications/${id}/approve`, {
+      method: 'PATCH',
+    }),
+  reject: (id, reason) => 
+    request(`/seller-applications/${id}/reject`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason }),
+    }),
+};
 
+// Media/Image API calls
+export const mediaAPI = {
+  upload: (file, type, associatedId, associatedModel) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    if (type) formData.append('type', type);
+    if (associatedId) formData.append('associatedId', associatedId);
+    if (associatedModel) formData.append('associatedModel', associatedModel);
+    
+    return request('/media/upload', {
+      method: 'POST',
+      headers: {
+        // Don't set Content-Type, let browser set it with boundary
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
+      body: formData,
+    });
+  },
+  getProfileImages: (userId) => request(`/media/profile/${userId}`),
+  getProductImages: (productId) => request(`/media/product/${productId}`),
+  getById: (id) => request(`/media/${id}`),
+  delete: (id) => request(`/media/${id}`, { method: 'DELETE' }),
+};
+
+// Messages API calls
+export const messagesAPI = {
+  getConversations: () => request('/messages/conversations'),
+  getConversation: (userId, page = 1, limit = 50) => 
+    request(`/messages/conversation/${userId}?page=${page}&limit=${limit}`),
+  send: (recipientId, content, type = 'text', attachments = []) => 
+    request('/messages', {
+      method: 'POST',
+      body: JSON.stringify({ recipientId, content, type, attachments }),
+    }),
+  markAsRead: (messageId) => 
+    request(`/messages/${messageId}/read`, {
+      method: 'PATCH',
+    }),
+  delete: (messageId) => 
+    request(`/messages/${messageId}`, {
+      method: 'DELETE',
+    }),
+  getUnreadCount: () => request('/messages/unread-count'),
+};
+
+// Product Reviews API calls
+export const productReviewsAPI = {
+  getByProduct: (productId) => request(`/products/${productId}/reviews`),
+  add: (productId, reviewData) => 
+    request(`/products/${productId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(reviewData),
+    }),
+  update: (productId, reviewId, reviewData) => 
+    request(`/products/${productId}/reviews/${reviewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(reviewData),
+    }),
+  delete: (productId, reviewId) => 
+    request(`/products/${productId}/reviews/${reviewId}`, {
+      method: 'DELETE',
+    }),
+};
+
+export default request;

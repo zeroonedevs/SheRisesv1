@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, CheckCircle, AlertCircle, Store } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { sellerApplications } from '../../utils/sellerApplications';
+import { sellerApplicationsAPI } from '../../utils/api';
 import './BecomeSellerModal.css';
 
 const BecomeSellerModal = ({ isOpen, onClose }) => {
@@ -11,6 +11,9 @@ const BecomeSellerModal = ({ isOpen, onClose }) => {
     businessType: '',
     description: '',
     address: '',
+    city: '',
+    state: '',
+    pincode: '',
     gstNumber: '',
     bankAccount: '',
     ifscCode: '',
@@ -36,51 +39,54 @@ const BecomeSellerModal = ({ isOpen, onClose }) => {
     setLoading(true);
 
     // Validation
-    if (!formData.businessName || !formData.businessType || !formData.address) {
+    if (!formData.businessName || !formData.businessType || !formData.address || 
+        !formData.city || !formData.state || !formData.pincode || !formData.description) {
       setError('Please fill in all required fields');
       setLoading(false);
       return;
     }
 
     try {
-      // Save seller application for admin review
-      const application = sellerApplications.add({
-        userId: user.id,
-        userEmail: user.email,
-        userName: user.name,
-        ...formData,
+      // Submit seller application via API
+      const response = await sellerApplicationsAPI.submit({
+        businessName: formData.businessName,
+        businessType: formData.businessType,
+        description: formData.description,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode,
+        gstNumber: formData.gstNumber || '',
+        bankAccount: formData.bankAccount || '',
+        ifscCode: formData.ifscCode || ''
       });
 
-      // Update user with seller application reference
-      const updatedUser = {
-        ...user,
-        sellerApplicationId: application.id,
-        sellerInfo: {
-          ...formData,
-          registeredAt: new Date().toISOString(),
-          status: 'pending',
-        },
-      };
-      
-      updateUser(updatedUser);
-      setSuccess(true);
-      
-      setTimeout(() => {
-        onClose();
-        setSuccess(false);
-        setFormData({
-          businessName: '',
-          businessType: '',
-          description: '',
-          address: '',
-          gstNumber: '',
-          bankAccount: '',
-          ifscCode: '',
-        });
-      }, 2000);
+      if (response.success) {
+        setSuccess(true);
+        
+        setTimeout(() => {
+          onClose();
+          setSuccess(false);
+          setFormData({
+            businessName: '',
+            businessType: '',
+            description: '',
+            address: '',
+            city: '',
+            state: '',
+            pincode: '',
+            gstNumber: '',
+            bankAccount: '',
+            ifscCode: '',
+          });
+        }, 2000);
+      } else {
+        setError(response.message || 'Failed to submit application');
+        setLoading(false);
+      }
     } catch (err) {
-      setError('Failed to register as seller. Please try again.');
-    } finally {
+      console.error('Submit application error:', err);
+      setError(err.message || 'Failed to register as seller. Please try again.');
       setLoading(false);
     }
   };
@@ -167,10 +173,54 @@ const BecomeSellerModal = ({ isOpen, onClose }) => {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                placeholder="Enter your complete business address"
-                rows="3"
+                placeholder="Street address, building name"
+                rows="2"
                 required
               />
+            </div>
+
+            <div className="seller-form-row">
+              <div className="seller-form-group">
+                <label>
+                  City <span className="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  placeholder="City"
+                  required
+                />
+              </div>
+
+              <div className="seller-form-group">
+                <label>
+                  State <span className="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  placeholder="State"
+                  required
+                />
+              </div>
+
+              <div className="seller-form-group">
+                <label>
+                  Pincode <span className="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="pincode"
+                  value={formData.pincode}
+                  onChange={handleChange}
+                  placeholder="Pincode"
+                  required
+                />
+              </div>
             </div>
 
             <div className="seller-form-row">

@@ -51,31 +51,55 @@ export const storage = {
     localStorage.removeItem('cart');
   },
 
-  // Course enrollment
-  getEnrolledCourses: () => {
-    const enrolled = localStorage.getItem('enrolledCourses');
+  // Course enrollment - Per User
+  getEnrolledCourses: (userId) => {
+    if (!userId) {
+      // Fallback: try to get from current user
+      const user = storage.getUser();
+      if (!user || !user.id) return [];
+      userId = user.id;
+    }
+    const enrolled = localStorage.getItem(`enrolledCourses_${userId}`);
     return enrolled ? JSON.parse(enrolled) : [];
   },
 
-  setEnrolledCourses: (courses) => {
-    localStorage.setItem('enrolledCourses', JSON.stringify(courses));
+  setEnrolledCourses: (courses, userId) => {
+    if (!userId) {
+      // Fallback: try to get from current user
+      const user = storage.getUser();
+      if (!user || !user.id) return;
+      userId = user.id;
+    }
+    localStorage.setItem(`enrolledCourses_${userId}`, JSON.stringify(courses));
   },
 
-  enrollInCourse: (course) => {
-    const enrolled = storage.getEnrolledCourses();
+  enrollInCourse: (course, userId) => {
+    if (!userId) {
+      // Fallback: try to get from current user
+      const user = storage.getUser();
+      if (!user || !user.id) return [];
+      userId = user.id;
+    }
+    const enrolled = storage.getEnrolledCourses(userId);
     if (!enrolled.find(c => c.id === course.id)) {
       enrolled.push({ ...course, enrolledAt: new Date().toISOString(), progress: 0 });
-      storage.setEnrolledCourses(enrolled);
+      storage.setEnrolledCourses(enrolled, userId);
     }
     return enrolled;
   },
 
-  updateCourseProgress: (courseId, progress) => {
-    const enrolled = storage.getEnrolledCourses();
+  updateCourseProgress: (courseId, progress, userId) => {
+    if (!userId) {
+      // Fallback: try to get from current user
+      const user = storage.getUser();
+      if (!user || !user.id) return [];
+      userId = user.id;
+    }
+    const enrolled = storage.getEnrolledCourses(userId);
     const course = enrolled.find(c => c.id === courseId);
     if (course) {
       course.progress = progress;
-      storage.setEnrolledCourses(enrolled);
+      storage.setEnrolledCourses(enrolled, userId);
     }
     return enrolled;
   },
