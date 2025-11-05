@@ -810,6 +810,26 @@ table tr:last-child td {
   color: white;
 }
 
+.action-btn.approve {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.action-btn.approve:hover {
+  background: #4caf50;
+  color: white;
+}
+
+.action-btn.reject {
+  background: rgba(244, 67, 54, 0.1);
+  color: var(--error-color);
+}
+
+.action-btn.reject:hover {
+  background: var(--error-color);
+  color: white;
+}
+
 /* Reports Section */
 .reports-section {
   background: white;

@@ -1006,7 +1006,6 @@ const Admin = () => {
                                       onClick={() => handleApproveSeller(appId)}
                                     >
                                       <CheckCircle size={18} />
-                                      <span>Approve</span>
                                     </button>
                                     <span className="action-tooltip">Approve Application</span>
                                   </div>
@@ -1016,7 +1015,6 @@ const Admin = () => {
                                       onClick={() => handleRejectSeller(appId)}
                                     >
                                       <XCircle size={18} />
-                                      <span>Reject</span>
                                     </button>
                                     <span className="action-tooltip">Reject Application</span>
                                   </div>
