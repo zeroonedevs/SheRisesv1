@@ -48,7 +48,7 @@ const Awareness = () => {
       readTime: '8 min read',
       author: 'Legal Aid Society',
       date: '2024-01-15',
-      image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       featured: true
     },
     {
@@ -59,7 +59,7 @@ const Awareness = () => {
       readTime: '6 min read',
       author: 'Dr. Priya Sharma',
       date: '2024-01-12',
-      image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       featured: false
     },
     {
@@ -70,7 +70,7 @@ const Awareness = () => {
       readTime: '10 min read',
       author: 'Financial Advisor Meera',
       date: '2024-01-10',
-      image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       featured: true
     },
     {
@@ -81,7 +81,7 @@ const Awareness = () => {
       readTime: '7 min read',
       author: 'Support Center Team',
       date: '2024-01-08',
-      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       featured: false
     }
   ];
@@ -204,7 +204,7 @@ const Awareness = () => {
             {featuredArticles.map(article => (
               <div key={article.id} className="featured-card">
                 <div className="featured-image">
-                  <img src={article.image} alt={article.title} />
+                  <img src={'./test.jpg'} alt={article.title} />
                   <div className="featured-badge">Featured</div>
                 </div>
                 <div className="featured-content">
@@ -268,7 +268,7 @@ const Awareness = () => {
             {filteredArticles.map(article => (
               <div key={article.id} className="article-card">
                 <div className="article-image">
-                  <img src={article.image} alt={article.title} />
+                  <img src={'./test.jpg'} alt={article.title} />
                 </div>
                 <div className="article-content">
                   <div className="article-meta">

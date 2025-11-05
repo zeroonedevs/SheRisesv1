@@ -113,7 +113,7 @@ const Community = () => {
       bio: 'CA with 15 years of experience helping women entrepreneurs with financial planning and business development.',
       available: true,
       verified: true,
-      image: 'https://i.pravatar.cc/150?img=5'
+      image: '/klu-sac-logo.png'
     },
     {
       id: 2,
@@ -126,7 +126,7 @@ const Community = () => {
       bio: 'Digital marketing expert specializing in helping women start and grow their online businesses.',
       available: true,
       verified: true,
-      image: 'https://i.pravatar.cc/150?img=12'
+      image: '/klu-sac-logo.png'
     },
     {
       id: 3,
@@ -139,7 +139,7 @@ const Community = () => {
       bio: 'Master artisan and product development expert helping women commercialize traditional crafts.',
       available: false,
       verified: true,
-      image: 'https://i.pravatar.cc/150?img=33'
+      image: '/klu-sac-logo.png'
     }
   ];
 
@@ -402,7 +402,7 @@ const Community = () => {
                     <div className="post-header">
                       <div className="author-info">
                         <div className="author-avatar">
-                          <img src={post.authorAvatar || `/https://i.pravatar.cc/80?img=${post.id + 10}`} alt={post.author} />
+                          <img src={post.authorAvatar || '/default-user.svg'} alt={post.author} />
                         </div>
                         <div className="author-details">
                           <h4>{post.author}</h4>

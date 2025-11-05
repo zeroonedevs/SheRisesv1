@@ -164,7 +164,7 @@ const Home = () => {
               <div key={index} className="testimonial-card">
                 <div className="testimonial-avatar">
                   <img 
-                    src={`https://i.pravatar.cc/150?img=${index + 5}`} 
+                    src={`./public/default-user.svg`} 
                     alt={testimonial.name}
                   />
                 </div>

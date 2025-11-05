@@ -55,7 +55,7 @@ const SellerDashboard = () => {
         stock: 15,
         sales: 45,
         status: 'active',
-        image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=600&h=500&fit=crop'
+        image: '/klu-sac-logo.png'
       }
     ];
     setProducts(sellerProducts);

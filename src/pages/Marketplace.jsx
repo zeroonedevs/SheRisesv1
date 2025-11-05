@@ -46,7 +46,7 @@ const Marketplace = () => {
       originalPrice: 3000,
       rating: 4.9,
       reviews: 127,
-      image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=600&h=500&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Beautiful handwoven silk saree with intricate zari work. Perfect for special occasions.',
       inStock: true,
       fastDelivery: true,
@@ -62,7 +62,7 @@ const Marketplace = () => {
       originalPrice: 1000,
       rating: 4.8,
       reviews: 89,
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=500&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Set of 6 traditional terracotta pots perfect for cooking and serving.',
       inStock: true,
       fastDelivery: false,
@@ -78,7 +78,7 @@ const Marketplace = () => {
       originalPrice: 2200,
       rating: 4.9,
       reviews: 156,
-      image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=500&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Elegant silver necklace and earring set with traditional Rajasthani designs.',
       inStock: true,
       fastDelivery: true,
@@ -94,7 +94,7 @@ const Marketplace = () => {
       originalPrice: 400,
       rating: 4.7,
       reviews: 203,
-      image: 'https://images.unsplash.com/photo-1609501676725-7186f3a0f1d8?w=600&h=500&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Pure organic turmeric powder sourced directly from Kerala farms.',
       inStock: true,
       fastDelivery: true,
@@ -110,7 +110,7 @@ const Marketplace = () => {
       originalPrice: 600,
       rating: 4.8,
       reviews: 94,
-      image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&h=500&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Set of 5 natural handmade soaps with different fragrances and benefits.',
       inStock: true,
       fastDelivery: false,
@@ -126,7 +126,7 @@ const Marketplace = () => {
       originalPrice: 800,
       rating: 4.6,
       reviews: 67,
-      image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=500&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Set of 3 eco-friendly bamboo baskets in different sizes.',
       inStock: true,
       fastDelivery: false,
@@ -262,7 +262,7 @@ const Marketplace = () => {
           {filteredProducts.map(product => (
             <div key={product.id} className="product-card" onClick={() => navigate(`/product/${product.id}`)} style={{ cursor: 'pointer' }}>
               <div className="product-image">
-                <img src={product.image} alt={product.name} />
+                <img src={'./test.jpg'} alt={product.name} />
                 <div className="product-badges">
                   {product.verified && (
                     <span className="verified-badge">

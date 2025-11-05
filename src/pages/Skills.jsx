@@ -41,7 +41,7 @@ const Skills = () => {
       students: 1250,
       rating: 4.8,
       price: 'Free',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Learn how to promote your business online using social media, email marketing, and digital advertising.',
       level: 'Beginner',
       lessons: 12,
@@ -57,7 +57,7 @@ const Skills = () => {
       students: 890,
       rating: 4.9,
       price: '₹500',
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Master the ancient art of handloom weaving and create beautiful textiles.',
       level: 'Intermediate',
       lessons: 18,
@@ -73,7 +73,7 @@ const Skills = () => {
       students: 2100,
       rating: 4.7,
       price: 'Free',
-      image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Learn about savings, investments, loans, and financial planning for women.',
       level: 'Beginner',
       lessons: 9,
@@ -89,7 +89,7 @@ const Skills = () => {
       students: 3200,
       rating: 4.6,
       price: 'Free',
-      image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Essential computer skills including email, internet, and basic software usage.',
       level: 'Beginner',
       lessons: 8,
@@ -105,7 +105,7 @@ const Skills = () => {
       students: 650,
       rating: 4.9,
       price: '₹800',
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Create beautiful pottery and ceramic items using traditional techniques.',
       level: 'Beginner',
       lessons: 15,
@@ -121,7 +121,7 @@ const Skills = () => {
       students: 1800,
       rating: 4.8,
       price: 'Free',
-      image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&h=400&fit=crop',
+      image: '/klu-sac-logo.png',
       description: 'Comprehensive guide to women\'s health, nutrition, and wellness practices.',
       level: 'Beginner',
       lessons: 10,
@@ -281,7 +281,7 @@ const Skills = () => {
             {filteredCourses.map(course => (
               <div key={course.id} className="course-card">
                 <div className="course-image">
-                  <img src={course.image} alt={course.title} />
+                  <img src={'./test.jpg'} alt={course.title} />
                   <div className="course-overlay">
                     <button className="play-btn">
                       <Play size={24} />

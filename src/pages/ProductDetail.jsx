@@ -44,8 +44,8 @@ const ProductDetail = () => {
       rating: 4.9,
       reviews: 127,
       images: [
-        'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=600&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=600&h=500&fit=crop',
+        '/klu-sac-logo.png',
+        '/klu-sac-logo.png',
       ],
       description: 'Beautiful handwoven silk saree with intricate zari work. Perfect for special occasions.',
       detailedDescription: 'This exquisite handwoven silk saree features traditional zari work that has been passed down through generations. Made with premium silk threads and handcrafted patterns, each saree is a unique piece of art. The intricate designs showcase the rich cultural heritage of Varanasi.',
