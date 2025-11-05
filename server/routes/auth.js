@@ -1,16 +1,9 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
+import { generateToken, verifyToken } from '../config/jwt.js';
 
 const router = express.Router();
-
-// Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production', {
-    expiresIn: '30d'
-  });
-};
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
@@ -155,7 +148,9 @@ router.get('/me', async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production');
+    // Verify JWT token using centralized config
+    const decoded = verifyToken(token);
+    // Fetch user from MongoDB
     const user = await User.findById(decoded.id);
 
     if (!user) {

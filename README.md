@@ -33,12 +33,30 @@ npm install
 ```
 
 Create `server/.env` file:
+
+**Option 1: Generate JWT Secret automatically:**
+```bash
+node server/scripts/generate-jwt-secret.js
+```
+
+**Option 2: Manual setup:**
 ```env
-MONGODB_URI=your-mongodb-connection-string
-JWT_SECRET=your-secret-key
+# MongoDB Configuration (from MongoDB Atlas)
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/sherises?retryWrites=true&w=majority
+
+# JWT Configuration (generate using: node server/scripts/generate-jwt-secret.js)
+JWT_SECRET=your-generated-secret-key-here
+JWT_EXPIRES_IN=30d
+
+# Server Configuration
 PORT=3000
 NODE_ENV=development
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:5173
 ```
+
+**📖 For detailed JWT and MongoDB setup instructions, see [JWT_MONGODB_INTEGRATION.md](./JWT_MONGODB_INTEGRATION.md)**
 
 Start backend:
 ```bash
@@ -70,6 +88,7 @@ npm run dev
 
 ### Backend
 - `cd server && npm run dev` - Start backend server
+- `node server/scripts/generate-jwt-secret.js` - Generate secure JWT secret
 
 ## License
 

@@ -263,7 +263,7 @@ const Layout = ({ children }) => {
                 <li><a href="#terms">Terms of Service</a></li>
               </ul>
             </div>
-            <div className="footer-section">
+            {/* <div className="footer-section">
               <h4>Connect</h4>
               <div className="social-links">
                 <a href="#facebook" aria-label="Facebook">📘</a>
@@ -271,7 +271,7 @@ const Layout = ({ children }) => {
                 <a href="#instagram" aria-label="Instagram">📷</a>
                 <a href="#linkedin" aria-label="LinkedIn">💼</a>
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="footer-bottom">
             <p>&copy; 2024 SheRises. All rights reserved. Empowering women, building communities.</p>

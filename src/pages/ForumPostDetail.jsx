@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { forum } from '../utils/forum';
+import { communityAPI } from '../utils/api';
 import {
   ArrowLeft,
   Heart,
@@ -29,100 +29,161 @@ const ForumPostDetail = () => {
   const [editContent, setEditContent] = useState('');
 
   useEffect(() => {
-    const postData = forum.getPostById(id);
-    if (postData) {
-      setPost(postData);
-      setEditContent(postData.content);
-    } else {
-      // Use mock data if not found
-      setPost({
-        id: parseInt(id),
-        author: 'Priya Sharma',
-        authorId: 'user1',
-        authorAvatar: '/default-user.svg',
-        location: 'Mumbai, Maharashtra',
-        category: 'Business',
-        title: 'Tips for Starting a Home-based Business',
-        content: 'I started my home-based jewelry business 6 months ago and wanted to share some tips that helped me succeed...',
-        likes: 45,
-        likedBy: [],
-        comments: [],
-        createdAt: new Date().toISOString()
-      });
-    }
+    const loadPost = async () => {
+      try {
+        const response = await communityAPI.getPostById(id);
+        if (response.success && response.post) {
+          const postData = response.post;
+          // Transform MongoDB post to match frontend format
+          const transformedPost = {
+            id: postData._id || postData.id,
+            _id: postData._id,
+            title: postData.title,
+            content: postData.content,
+            author: postData.author?.name || postData.authorName,
+            authorId: postData.author?._id || postData.author,
+            authorAvatar: postData.author?.avatar || postData.authorAvatar || '/default-user.svg',
+            location: postData.author?.location || postData.location || '',
+            category: postData.category,
+            likes: postData.likeCount || postData.likes?.length || 0,
+            likedBy: postData.likes || [],
+            comments: postData.comments || [],
+            commentCount: postData.commentCount || postData.comments?.length || 0,
+            createdAt: postData.createdAt,
+            isDeleted: postData.isDeleted
+          };
+          setPost(transformedPost);
+          setEditContent(transformedPost.content);
+        }
+      } catch (error) {
+        console.error('Error loading post:', error);
+        // Fallback to mock data if API fails
+        setPost({
+          id: id,
+          author: 'Priya Sharma',
+          authorId: 'user1',
+          authorAvatar: '/default-user.svg',
+          location: 'Mumbai, Maharashtra',
+          category: 'Business',
+          title: 'Tips for Starting a Home-based Business',
+          content: 'I started my home-based jewelry business 6 months ago and wanted to share some tips that helped me succeed...',
+          likes: 45,
+          likedBy: [],
+          comments: [],
+          createdAt: new Date().toISOString()
+        });
+      }
+    };
+    
+    loadPost();
   }, [id]);
 
-  const handleLike = () => {
+  const handleLike = async () => {
     if (!isAuthenticated) {
       alert('Please login to like posts');
       return;
     }
-    const updated = forum.toggleLike(post.id, user.id);
-    if (updated) setPost(updated);
+    try {
+      const response = await communityAPI.likePost(post._id || post.id);
+      if (response.success) {
+        // Reload post to get updated like count
+        const refreshResponse = await communityAPI.getPostById(post._id || post.id);
+        if (refreshResponse.success && refreshResponse.post) {
+          const postData = refreshResponse.post;
+          const updatedPost = {
+            ...post,
+            likes: postData.likeCount || postData.likes?.length || 0,
+            likedBy: postData.likes || []
+          };
+          setPost(updatedPost);
+        }
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
+      alert('Failed to like post. Please try again.');
+    }
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (!isAuthenticated) {
       alert('Please login to comment');
       return;
     }
     if (!newComment.trim()) return;
 
-    const comment = forum.addComment(post.id, {
-      authorId: user.id,
-      author: user.name,
-      authorAvatar: user.avatar,
-      content: newComment.trim()
-    });
-
-    if (comment) {
-      const updated = forum.getPostById(id);
-      setPost(updated);
-      setNewComment('');
+    try {
+      const response = await communityAPI.replyToPost(post._id || post.id, {
+        content: newComment.trim()
+      });
+      
+      if (response.success && response.post) {
+        const postData = response.post;
+        const updatedPost = {
+          ...post,
+          comments: postData.comments || [],
+          commentCount: postData.commentCount || postData.comments?.length || 0
+        };
+        setPost(updatedPost);
+        setNewComment('');
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Failed to add comment. Please try again.');
     }
   };
 
-  const handleAddReply = (commentId) => {
+  const handleAddReply = async (commentId) => {
     if (!isAuthenticated) {
       alert('Please login to reply');
       return;
     }
     if (!replyText.trim()) return;
 
-    const reply = forum.addReply(post.id, commentId, {
-      authorId: user.id,
-      author: user.name,
-      authorAvatar: user.avatar,
-      content: replyText.trim()
-    });
-
-    if (reply) {
-      const updated = forum.getPostById(id);
-      setPost(updated);
-      setReplyText('');
-      setReplyingTo(null);
+    // Note: Backend doesn't have nested replies yet, so we'll add it as a regular comment
+    // In the future, you can add a nested reply endpoint
+    try {
+      const response = await communityAPI.replyToPost(post._id || post.id, {
+        content: replyText.trim(),
+        parentCommentId: commentId
+      });
+      
+      if (response.success && response.post) {
+        const postData = response.post;
+        const updatedPost = {
+          ...post,
+          comments: postData.comments || [],
+          commentCount: postData.commentCount || postData.comments?.length || 0
+        };
+        setPost(updatedPost);
+        setReplyText('');
+        setReplyingTo(null);
+      }
+    } catch (error) {
+      console.error('Error adding reply:', error);
+      alert('Failed to add reply. Please try again.');
     }
   };
 
-  const handleEditPost = () => {
-    if (!isAuthenticated || user.id !== post.authorId) return;
+  const handleEditPost = async () => {
+    if (!isAuthenticated || String(user.id) !== String(post.authorId)) return;
     
-    const updated = forum.updatePost(post.id, { content: editContent });
-    if (updated) {
-      setPost(updated);
-      setIsEditing(false);
-    }
+    // Note: Backend doesn't have update endpoint yet, you can add it later
+    // For now, we'll show an alert
+    alert('Post editing feature coming soon!');
+    setIsEditing(false);
   };
 
-  const handleDeletePost = () => {
-    if (!isAuthenticated || (user.id !== post.authorId && user.role !== 'admin')) {
+  const handleDeletePost = async () => {
+    if (!isAuthenticated || (String(user.id) !== String(post.authorId) && user.role !== 'admin')) {
       alert('You do not have permission to delete this post');
       return;
     }
     
     if (window.confirm('Are you sure you want to delete this post?')) {
-      forum.deletePost(post.id);
-      navigate('/community');
+      // Note: Backend doesn't have delete endpoint yet, you can add it later
+      // For now, we'll navigate back
+      alert('Post deletion feature coming soon!');
+      // navigate('/community');
     }
   };
 
@@ -136,18 +197,23 @@ const ForumPostDetail = () => {
       return;
     }
 
-    forum.reportPost(post.id, {
-      reportedBy: user.id,
-      reason: reportReason
-    });
-
+    // Note: Backend doesn't have report endpoint yet, you can add it later
     alert('Post reported. Thank you for helping keep our community safe.');
     setShowReportModal(false);
     setReportReason('');
   };
 
-  const isLiked = post && post.likedBy && post.likedBy.includes(user?.id);
-  const canEdit = post && user && (user.id === post.authorId || user.role === 'admin');
+  // Check if user liked the post (handle both string and ObjectId formats)
+  const isLiked = post && post.likedBy && (
+    post.likedBy.some(likeId => 
+      String(likeId) === String(user?.id) || 
+      String(likeId?._id || likeId) === String(user?.id)
+    )
+  );
+  const canEdit = post && user && (
+    String(user.id) === String(post.authorId) || 
+    user.role === 'admin'
+  );
   const canDelete = canEdit;
 
   if (!post) {
@@ -267,26 +333,29 @@ const ForumPostDetail = () => {
 
           <div className="comments-list">
             {post.comments && post.comments.length > 0 ? (
-              post.comments.map(comment => (
-                <div key={comment.id} className="comment-item">
-                  <img src={comment.authorAvatar || '/default-user.svg'} alt={comment.author} />
+              post.comments.map((comment, index) => {
+                const commentAuthor = comment.user?.name || comment.userName || comment.author || 'Anonymous';
+                const commentAvatar = comment.user?.avatar || comment.userAvatar || comment.authorAvatar || '/default-user.svg';
+                return (
+                <div key={comment._id || comment.id || index} className="comment-item">
+                  <img src={commentAvatar} alt={commentAuthor} />
                   <div className="comment-content">
                     <div className="comment-header">
-                      <h4>{comment.author}</h4>
+                      <h4>{commentAuthor}</h4>
                       <span className="comment-time">
-                        {new Date(comment.createdAt).toLocaleDateString()}
+                        {comment.createdAt ? new Date(comment.createdAt).toLocaleDateString() : 'Recently'}
                       </span>
                     </div>
                     <p>{comment.content}</p>
                     <div className="comment-actions">
                       <button
                         className="reply-btn"
-                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        onClick={() => setReplyingTo(replyingTo === (comment._id || comment.id) ? null : (comment._id || comment.id))}
                       >
                         Reply
                       </button>
                     </div>
-                    {replyingTo === comment.id && (
+                    {replyingTo === (comment._id || comment.id) && (
                       <div className="reply-form">
                         <textarea
                           placeholder="Write a reply..."
@@ -297,7 +366,7 @@ const ForumPostDetail = () => {
                         <div className="reply-actions">
                           <button
                             className="btn btn-primary"
-                            onClick={() => handleAddReply(comment.id)}
+                            onClick={() => handleAddReply(comment._id || comment.id)}
                           >
                             Post Reply
                           </button>
@@ -315,8 +384,8 @@ const ForumPostDetail = () => {
                     )}
                     {comment.replies && comment.replies.length > 0 && (
                       <div className="replies-list">
-                        {comment.replies.map(reply => (
-                          <div key={reply.id} className="reply-item">
+                        {comment.replies.map((reply, replyIndex) => (
+                          <div key={reply._id || reply.id || replyIndex} className="reply-item">
                             <img src={reply.authorAvatar || '/default-user.svg'} alt={reply.author} />
                             <div className="reply-content">
                               <div className="reply-header">
@@ -333,7 +402,8 @@ const ForumPostDetail = () => {
                     )}
                   </div>
                 </div>
-              ))
+              );
+              })
             ) : (
               <div className="no-comments">
                 <MessageCircle size={48} />

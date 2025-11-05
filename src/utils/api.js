@@ -108,6 +108,10 @@ export const communityAPI = {
       body: JSON.stringify(postData),
     }),
   getPostById: (id) => request(`/forum/posts/${id}`),
+  likePost: (postId) => 
+    request(`/forum/posts/${postId}/like`, {
+      method: 'POST',
+    }),
   replyToPost: (postId, replyData) => 
     request(`/forum/posts/${postId}/replies`, {
       method: 'POST',

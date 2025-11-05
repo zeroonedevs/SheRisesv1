@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { forum } from '../utils/forum';
+import { communityAPI } from '../utils/api';
 import { messaging } from '../utils/messaging';
 import { mentorship } from '../utils/mentorship';
 import { 
@@ -33,9 +33,39 @@ const Community = () => {
   const [requestMessage, setRequestMessage] = useState('');
 
   useEffect(() => {
-    // Load forum posts
-    const posts = forum.getAllPosts().filter(p => !p.isDeleted);
-    setForumPostsData(posts.length > 0 ? posts : forumPosts); // Use mock if empty
+    // Load forum posts from MongoDB
+    const loadForumPosts = async () => {
+      try {
+        const response = await communityAPI.getForumPosts({ sort: 'recent' });
+        if (response.success && response.posts) {
+          // Transform MongoDB posts to match frontend format
+          const transformedPosts = response.posts.map(post => ({
+            id: post._id || post.id,
+            _id: post._id,
+            title: post.title,
+            content: post.content,
+            author: post.author?.name || post.authorName,
+            authorId: post.author?._id || post.author,
+            authorAvatar: post.author?.avatar || post.authorAvatar || '/default-user.svg',
+            location: post.author?.location || post.location || '',
+            category: post.category,
+            likes: post.likeCount || post.likes?.length || 0,
+            likedBy: post.likes || [],
+            comments: post.comments || [],
+            commentCount: post.commentCount || post.comments?.length || 0,
+            createdAt: post.createdAt,
+            timeAgo: getTimeAgo(post.createdAt)
+          }));
+          setForumPostsData(transformedPosts.length > 0 ? transformedPosts : forumPosts);
+        }
+      } catch (error) {
+        console.error('Error loading forum posts:', error);
+        // Fallback to mock data if API fails
+        setForumPostsData(forumPosts);
+      }
+    };
+    
+    loadForumPosts();
     
     // Load mentorship requests if authenticated
     if (isAuthenticated && user) {
@@ -48,6 +78,20 @@ const Community = () => {
       }
     }
   }, [isAuthenticated, user]);
+
+  // Helper function to calculate time ago
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return date.toLocaleDateString();
+  };
 
   const tabs = [
     { id: 'forum', name: 'Community Forum', icon: MessageCircle },
@@ -196,7 +240,7 @@ const Community = () => {
     console.log('Liked post:', postId);
   };
 
-  const handleNewPost = () => {
+  const handleNewPost = async () => {
     if (!isAuthenticated) {
       alert('Please login to create a post');
       return;
@@ -206,30 +250,76 @@ const Community = () => {
       return;
     }
 
-    const post = forum.createPost({
-      authorId: user.id,
-      author: user.name,
-      authorAvatar: user.avatar,
-      location: user.location || '',
-      category: newPost.category,
-      title: newPost.title.trim(),
-      content: newPost.content.trim()
-    });
+    try {
+      const response = await communityAPI.createPost({
+        title: newPost.title.trim(),
+        content: newPost.content.trim(),
+        category: newPost.category
+      });
 
-    if (post) {
-      setForumPostsData([post, ...forumPostsData]);
-      setNewPost({ title: '', content: '', category: 'General' });
+      if (response.success && response.post) {
+        const post = response.post;
+        // Transform MongoDB post to match frontend format
+        const transformedPost = {
+          id: post._id || post.id,
+          _id: post._id,
+          title: post.title,
+          content: post.content,
+          author: post.author?.name || post.authorName,
+          authorId: post.author?._id || post.author,
+          authorAvatar: post.author?.avatar || post.authorAvatar || '/default-user.svg',
+          location: post.author?.location || post.location || '',
+          category: post.category,
+          likes: post.likeCount || 0,
+          likedBy: post.likes || [],
+          comments: post.comments || [],
+          commentCount: post.commentCount || 0,
+          createdAt: post.createdAt,
+          timeAgo: 'Just now'
+        };
+        setForumPostsData([transformedPost, ...forumPostsData]);
+        setNewPost({ title: '', content: '', category: 'General' });
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Failed to create post. Please try again.');
     }
   };
 
-  const handleLikePost = (postId) => {
+  const handleLikePost = async (postId) => {
     if (!isAuthenticated) {
       alert('Please login to like posts');
       return;
     }
-    const updated = forum.toggleLike(postId, user.id);
-    if (updated) {
-      setForumPostsData(forumPostsData.map(p => p.id === postId ? updated : p));
+    try {
+      const response = await communityAPI.likePost(postId);
+      if (response.success) {
+        // Reload posts to get updated like count
+        const refreshResponse = await communityAPI.getForumPosts({ sort: 'recent' });
+        if (refreshResponse.success && refreshResponse.posts) {
+          const transformedPosts = refreshResponse.posts.map(post => ({
+            id: post._id || post.id,
+            _id: post._id,
+            title: post.title,
+            content: post.content,
+            author: post.author?.name || post.authorName,
+            authorId: post.author?._id || post.author,
+            authorAvatar: post.author?.avatar || post.authorAvatar || '/default-user.svg',
+            location: post.author?.location || post.location || '',
+            category: post.category,
+            likes: post.likeCount || post.likes?.length || 0,
+            likedBy: post.likes || [],
+            comments: post.comments || [],
+            commentCount: post.commentCount || post.comments?.length || 0,
+            createdAt: post.createdAt,
+            timeAgo: getTimeAgo(post.createdAt)
+          }));
+          setForumPostsData(transformedPosts);
+        }
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
+      alert('Failed to like post. Please try again.');
     }
   };
 
@@ -391,12 +481,19 @@ const Community = () => {
             {/* Forum Posts */}
             <div className="forum-posts">
               {filteredPosts.map(post => {
-                const isLiked = post.likedBy && post.likedBy.includes(user?.id);
+                // Check if user liked the post (handle both string and ObjectId formats)
+                const isLiked = post.likedBy && (
+                  post.likedBy.some(likeId => 
+                    String(likeId) === String(user?.id) || 
+                    String(likeId?._id || likeId) === String(user?.id)
+                  )
+                );
+                const postId = post._id || post.id;
                 return (
                   <div 
-                    key={post.id} 
+                    key={postId} 
                     className="forum-post"
-                    onClick={() => navigate(`/forum/${post.id}`)}
+                    onClick={() => navigate(`/forum/${postId}`)}
                     style={{ cursor: 'pointer' }}
                   >
                     <div className="post-header">
@@ -426,14 +523,14 @@ const Community = () => {
                     <div className="post-actions" onClick={(e) => e.stopPropagation()}>
                       <button 
                         className={`action-btn ${isLiked ? 'liked' : ''}`}
-                        onClick={() => handleLikePost(post.id)}
+                        onClick={() => handleLikePost(postId)}
                       >
                         <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
                         {post.likes || 0}
                       </button>
                       <button className="action-btn">
                         <MessageCircle size={16} />
-                        {post.comments?.length || 0}
+                        {post.commentCount || post.comments?.length || 0}
                       </button>
                       <button className="action-btn">
                         <Share2 size={16} />

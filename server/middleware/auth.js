@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '../config/jwt.js';
 import User from '../models/User.js';
 
 export const authenticate = async (req, res, next) => {
@@ -12,8 +12,10 @@ export const authenticate = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production');
+    // Verify JWT token using centralized config
+    const decoded = verifyToken(token);
     
+    // Fetch user from MongoDB using the decoded user ID
     const user = await User.findById(decoded.id).select('-password');
     
     if (!user) {
@@ -23,6 +25,7 @@ export const authenticate = async (req, res, next) => {
       });
     }
 
+    // Attach user to request object for use in routes
     req.user = user;
     next();
   } catch (error) {
@@ -30,6 +33,13 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid token'
+      });
+    }
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired. Please login again.'
       });
     }
     
