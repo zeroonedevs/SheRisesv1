@@ -68,9 +68,9 @@ const ProductDetail = () => {
     const foundProduct = products.find(p => p.id === parseInt(id));
     if (foundProduct) {
       setProduct(foundProduct);
-      const productReviewsData = productReviewsUtil.getByProductId(foundProduct.id);
+      const productReviewsData = productReviews.getByProductId(foundProduct.id);
       setReviews(productReviewsData);
-      const avg = productReviewsUtil.getAverageRating(foundProduct.id);
+      const avg = productReviews.getAverageRating(foundProduct.id);
       setAverageRating(parseFloat(avg));
     }
 
@@ -90,7 +90,7 @@ const ProductDetail = () => {
       return;
     }
 
-    productReviewsUtil.add({
+    productReviews.add({
       productId: product.id,
       userId: user.id,
       userName: user.name,
@@ -99,9 +99,9 @@ const ProductDetail = () => {
       comment: reviewForm.comment,
     });
 
-    const updatedReviews = productReviewsUtil.getByProductId(product.id);
+    const updatedReviews = productReviews.getByProductId(product.id);
     setReviews(updatedReviews);
-    const avg = productReviewsUtil.getAverageRating(product.id);
+    const avg = productReviews.getAverageRating(product.id);
     setAverageRating(parseFloat(avg));
     setReviewForm({ rating: 5, comment: '' });
     setShowReviewForm(false);
@@ -240,7 +240,17 @@ const ProductDetail = () => {
                   Add to Cart
                 </button>
               )}
-              <button className="btn btn-outline">
+              <button 
+                className="btn btn-outline"
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    alert('Please login to add items to wishlist');
+                    navigate('/login');
+                  } else {
+                    alert('Added to wishlist!');
+                  }
+                }}
+              >
                 <Heart size={20} />
                 Add to Wishlist
               </button>
@@ -331,9 +341,25 @@ const ProductDetail = () => {
                   </div>
                   <p className="review-comment">{review.comment}</p>
                   <div className="review-actions">
-                    <button className="helpful-btn">
+                    <button 
+                      className="helpful-btn"
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          alert('Please login to mark reviews as helpful');
+                        } else {
+                          const reviews = productReviews.getAll();
+                          const reviewIndex = reviews.findIndex(r => r.id === review.id);
+                          if (reviewIndex !== -1) {
+                            reviews[reviewIndex].helpful = (reviews[reviewIndex].helpful || 0) + 1;
+                            localStorage.setItem('productReviews', JSON.stringify(reviews));
+                            const updatedReviews = productReviews.getByProductId(product.id);
+                            setReviews(updatedReviews);
+                          }
+                        }
+                      }}
+                    >
                       <ThumbsUp size={14} />
-                      Helpful ({review.helpful})
+                      Helpful ({review.helpful || 0})
                     </button>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { contentCMS } from '../utils/contentCMS';
 import { 
   Lightbulb, 
@@ -17,6 +18,7 @@ import {
 import './Awareness.css';
 
 const Awareness = () => {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [articles, setArticles] = useState([]);
@@ -185,7 +187,12 @@ const Awareness = () => {
                   <span>{helpline.number}</span>
                 </div>
                 <p>{helpline.description}</p>
-                <button className="btn btn-primary">
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => {
+                    window.location.href = `tel:${helpline.number}`;
+                  }}
+                >
                   <Phone size={16} />
                   Call Now
                 </button>
@@ -204,7 +211,7 @@ const Awareness = () => {
             {featuredArticles.map(article => (
               <div key={article.id} className="featured-card">
                 <div className="featured-image">
-                  <img src={'./test.jpg'} alt={article.title} />
+                  <img src={'/test.jpg'} alt={article.title} />
                   <div className="featured-badge">Featured</div>
                 </div>
                 <div className="featured-content">
@@ -219,7 +226,12 @@ const Awareness = () => {
                       <span>by {article.author}</span>
                       <span>{article.date}</span>
                     </div>
-                    <button className="btn btn-outline">
+                    <button 
+                      className="btn btn-outline"
+                      onClick={() => {
+                        alert(`Article: ${article.title}\n\n${article.content}\n\nFull article feature coming soon!`);
+                      }}
+                    >
                       Read More
                       <ExternalLink size={16} />
                     </button>
@@ -268,7 +280,7 @@ const Awareness = () => {
             {filteredArticles.map(article => (
               <div key={article.id} className="article-card">
                 <div className="article-image">
-                  <img src={'./test.jpg'} alt={article.title} />
+                  <img src={'/test.jpg'} alt={article.title} />
                 </div>
                 <div className="article-content">
                   <div className="article-meta">
@@ -282,7 +294,12 @@ const Awareness = () => {
                       <span>by {article.author}</span>
                       <span>{article.date}</span>
                     </div>
-                    <button className="btn btn-outline">
+                    <button 
+                      className="btn btn-outline"
+                      onClick={() => {
+                        alert(`Article: ${article.title}\n\n${article.content}\n\nFull article feature coming soon!`);
+                      }}
+                    >
                       Read More
                       <ExternalLink size={16} />
                     </button>
@@ -321,7 +338,12 @@ const Awareness = () => {
                       <span>{scheme.contact}</span>
                     </div>
                   </div>
-                  <button className="btn btn-primary">
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => {
+                      alert(`Scheme: ${scheme.name}\n\n${scheme.description}\n\nEligibility: ${scheme.eligibility}\n\nBenefits: ${scheme.benefits}\n\nContact: ${scheme.contact}\n\nMore details coming soon!`);
+                    }}
+                  >
                     <ExternalLink size={16} />
                     Learn More
                   </button>
@@ -342,25 +364,53 @@ const Awareness = () => {
               <Shield className="support-icon" />
               <h3>Legal Support</h3>
               <p>Free legal aid and counseling services for women facing legal issues.</p>
-              <button className="btn btn-outline">Find Legal Help</button>
+              <button 
+                className="btn btn-outline"
+                onClick={() => {
+                  alert('Legal Help Resources:\n\n• National Legal Services Authority\n• Women\'s Legal Aid Centers\n• Local NGOs\n\nContact your nearest legal aid center for assistance.');
+                }}
+              >
+                Find Legal Help
+              </button>
             </div>
             <div className="support-card">
               <Heart className="support-icon" />
               <h3>Health Services</h3>
               <p>Access to healthcare services, mental health support, and wellness programs.</p>
-              <button className="btn btn-outline">Health Resources</button>
+              <button 
+                className="btn btn-outline"
+                onClick={() => {
+                  alert('Health Resources:\n\n• Government Hospitals\n• Primary Health Centers\n• Women\'s Health Clinics\n• Mental Health Support Services\n\nContact your nearest health center for more information.');
+                }}
+              >
+                Health Resources
+              </button>
             </div>
             <div className="support-card">
               <Award className="support-icon" />
               <h3>Education Support</h3>
               <p>Scholarships, skill development programs, and educational resources.</p>
-              <button className="btn btn-outline">Education Programs</button>
+              <button 
+                className="btn btn-outline"
+                onClick={() => {
+                  navigate('/skills');
+                }}
+              >
+                Education Programs
+              </button>
             </div>
             <div className="support-card">
               <Users className="support-icon" />
               <h3>Community Support</h3>
               <p>Connect with support groups, counselors, and community organizations.</p>
-              <button className="btn btn-outline">Join Community</button>
+              <button 
+                className="btn btn-outline"
+                onClick={() => {
+                  navigate('/community');
+                }}
+              >
+                Join Community
+              </button>
             </div>
           </div>
         </div>

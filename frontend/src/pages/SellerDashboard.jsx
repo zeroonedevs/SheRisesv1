@@ -259,11 +259,21 @@ const SellerDashboard = () => {
                       <span>Sales: {product.sales}</span>
                     </div>
                     <div className="product-actions">
-                      <button className="btn btn-outline">
+                      <button 
+                        className="btn btn-outline"
+                        onClick={() => {
+                          alert('Edit product feature coming soon!');
+                        }}
+                      >
                         <Edit size={16} />
                         Edit
                       </button>
-                      <button className="btn btn-outline">
+                      <button 
+                        className="btn btn-outline"
+                        onClick={() => {
+                          navigate(`/product/${product.id}`);
+                        }}
+                      >
                         <Eye size={16} />
                         View
                       </button>

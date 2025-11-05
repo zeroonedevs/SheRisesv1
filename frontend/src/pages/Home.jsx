@@ -164,7 +164,7 @@ const Home = () => {
               <div key={index} className="testimonial-card">
                 <div className="testimonial-avatar">
                   <img 
-                    src={`./public/default-user.svg`} 
+                    src={`/default-user.svg`} 
                     alt={testimonial.name}
                   />
                 </div>

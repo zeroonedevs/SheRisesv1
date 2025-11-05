@@ -262,7 +262,7 @@ const Marketplace = () => {
           {filteredProducts.map(product => (
             <div key={product.id} className="product-card" onClick={() => navigate(`/product/${product.id}`)} style={{ cursor: 'pointer' }}>
               <div className="product-image">
-                <img src={'./test.jpg'} alt={product.name} />
+                <img src={'/test.jpg'} alt={product.name} />
                 <div className="product-badges">
                   {product.verified && (
                     <span className="verified-badge">
@@ -282,7 +282,17 @@ const Marketplace = () => {
                     </span>
                   )}
                 </div>
-                <button className="wishlist-btn">
+                <button 
+                  className="wishlist-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isAuthenticated) {
+                      alert('Please login to add items to wishlist');
+                    } else {
+                      alert('Added to wishlist!');
+                    }
+                  }}
+                >
                   <Heart size={18} />
                 </button>
               </div>

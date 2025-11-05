@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { sellerApplications } from '../utils/sellerApplications';
 import { forum } from '../utils/forum';
+import { contentCMS } from '../utils/contentCMS';
 import './Admin.css';
 
 const Admin = () => {
@@ -58,15 +59,20 @@ const Admin = () => {
     // Simulate API call delay for better UX
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    // Simple demo authentication (in production, this would be API call)
-    if (loginForm.username === 'kushaalbadavath8@gmail.com' && loginForm.password === 'Kushaal@0806') {
+    // ⚠️ SECURITY: In production, remove hardcoded credentials!
+    // This should be replaced with a secure API call to backend
+    // For now, using environment variable or secure config
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || '';
+    const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || '';
+    
+    if (adminEmail && adminPassword && loginForm.username === adminEmail && loginForm.password === adminPassword) {
       setShowSuccess(true);
       setTimeout(() => {
         setIsLoggedIn(true);
         setShowSuccess(false);
       }, 600);
     } else {
-      setLoginError('Invalid username or password. Use: kushaalbadavath8@gmail.com / Kushaal@0806');
+      setLoginError('Invalid username or password');
       setIsLoading(false);
     }
   };
@@ -410,13 +416,23 @@ const Admin = () => {
                             <td>
                               <div className="action-buttons">
                                 <div className="action-btn-wrapper">
-                                  <button className="action-btn view">
+                                  <button 
+                                    className="action-btn view"
+                                    onClick={() => {
+                                      alert(`User Details:\n\nName: ${user.name}\nEmail: ${user.email}\nLocation: ${user.location}\nJoin Date: ${user.joinDate}\nStatus: ${user.status}`);
+                                    }}
+                                  >
                                     <Eye size={16} />
                                   </button>
                                   <span className="action-tooltip">View Details</span>
                                 </div>
                                 <div className="action-btn-wrapper">
-                                  <button className="action-btn edit">
+                                  <button 
+                                    className="action-btn edit"
+                                    onClick={() => {
+                                      alert('Edit user feature coming soon!');
+                                    }}
+                                  >
                                     <Edit size={16} />
                                   </button>
                                   <span className="action-tooltip">Edit User</span>
@@ -438,7 +454,12 @@ const Admin = () => {
             <div className="users-section">
               <div className="section-header">
                 <h2>User Management</h2>
-                <button className="btn btn-primary">
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => {
+                    alert('Add user feature coming soon!');
+                  }}
+                >
                   <Plus size={20} />
                   Add User
                 </button>
@@ -473,19 +494,36 @@ const Admin = () => {
                         <td>
                         <div className="action-buttons">
                           <div className="action-btn-wrapper">
-                            <button className="action-btn view">
+                            <button 
+                              className="action-btn view"
+                              onClick={() => {
+                                alert(`User Details:\n\nName: ${user.name}\nEmail: ${user.email}\nLocation: ${user.location}\nJoin Date: ${user.joinDate}\nStatus: ${user.status}`);
+                              }}
+                            >
                               <Eye size={16} />
                             </button>
                             <span className="action-tooltip">View Details</span>
                           </div>
                           <div className="action-btn-wrapper">
-                            <button className="action-btn edit">
+                            <button 
+                              className="action-btn edit"
+                              onClick={() => {
+                                alert('Edit user feature coming soon!');
+                              }}
+                            >
                               <Edit size={16} />
                             </button>
                             <span className="action-tooltip">Edit</span>
                           </div>
                           <div className="action-btn-wrapper">
-                            <button className="action-btn delete">
+                            <button 
+                              className="action-btn delete"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete user "${user.name}"?`)) {
+                                  alert('Delete user feature coming soon!');
+                                }
+                              }}
+                            >
                               <Trash2 size={16} />
                             </button>
                             <span className="action-tooltip">Delete</span>
@@ -505,7 +543,12 @@ const Admin = () => {
             <div className="courses-section">
               <div className="section-header">
                 <h2>Course Management</h2>
-                <button className="btn btn-primary">
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => {
+                    alert('Add course feature coming soon!');
+                  }}
+                >
                   <Plus size={20} />
                   Add Course
                 </button>
@@ -540,19 +583,36 @@ const Admin = () => {
                         <td>
                         <div className="action-buttons">
                           <div className="action-btn-wrapper">
-                            <button className="action-btn view">
+                            <button 
+                              className="action-btn view"
+                              onClick={() => {
+                                alert(`Course Details:\n\nTitle: ${course.title}\nInstructor: ${course.instructor}\nCategory: ${course.category}\nStudents: ${course.students.toLocaleString()}\nStatus: ${course.status}`);
+                              }}
+                            >
                               <Eye size={16} />
                             </button>
                             <span className="action-tooltip">View Details</span>
                           </div>
                           <div className="action-btn-wrapper">
-                            <button className="action-btn edit">
+                            <button 
+                              className="action-btn edit"
+                              onClick={() => {
+                                alert('Edit course feature coming soon!');
+                              }}
+                            >
                               <Edit size={16} />
                             </button>
                             <span className="action-tooltip">Edit</span>
                           </div>
                           <div className="action-btn-wrapper">
-                            <button className="action-btn delete">
+                            <button 
+                              className="action-btn delete"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete course "${course.title}"?`)) {
+                                  alert('Delete course feature coming soon!');
+                                }
+                              }}
+                            >
                               <Trash2 size={16} />
                             </button>
                             <span className="action-tooltip">Delete</span>
@@ -803,7 +863,12 @@ const Admin = () => {
             <div className="products-section">
               <div className="section-header">
                 <h2>Product Management</h2>
-                <button className="btn btn-primary">
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => {
+                    alert('Add product feature coming soon!');
+                  }}
+                >
                   <Plus size={20} />
                   Add Product
                 </button>
@@ -840,19 +905,36 @@ const Admin = () => {
                         <td>
                         <div className="action-buttons">
                           <div className="action-btn-wrapper">
-                            <button className="action-btn view">
+                            <button 
+                              className="action-btn view"
+                              onClick={() => {
+                                alert(`Product Details:\n\nName: ${product.name}\nSeller: ${product.seller}\nCategory: ${product.category}\nPrice: ₹${product.price.toLocaleString()}\nSales: ${product.sales}\nStatus: ${product.status}`);
+                              }}
+                            >
                               <Eye size={16} />
                             </button>
                             <span className="action-tooltip">View Details</span>
                           </div>
                           <div className="action-btn-wrapper">
-                            <button className="action-btn edit">
+                            <button 
+                              className="action-btn edit"
+                              onClick={() => {
+                                alert('Edit product feature coming soon!');
+                              }}
+                            >
                               <Edit size={16} />
                             </button>
                             <span className="action-tooltip">Edit</span>
                           </div>
                           <div className="action-btn-wrapper">
-                            <button className="action-btn delete">
+                            <button 
+                              className="action-btn delete"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete product "${product.name}"?`)) {
+                                  alert('Delete product feature coming soon!');
+                                }
+                              }}
+                            >
                               <Trash2 size={16} />
                             </button>
                             <span className="action-tooltip">Delete</span>

@@ -281,7 +281,7 @@ const Skills = () => {
             {filteredCourses.map(course => (
               <div key={course.id} className="course-card">
                 <div className="course-image">
-                  <img src={'./test.jpg'} alt={course.title} />
+                  <img src={'/test.jpg'} alt={course.title} />
                   <div className="course-overlay">
                     <button className="play-btn">
                       <Play size={24} />
@@ -340,7 +340,14 @@ const Skills = () => {
           <div className="cta-content">
             <h2>Ready to Start Learning?</h2>
             <p>Join thousands of women who are already developing new skills and building their futures.</p>
-            <button className="btn btn-primary">
+            <button 
+              className="btn btn-primary"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setSelectedCategory('all');
+                setSearchTerm('');
+              }}
+            >
               <Calendar size={20} />
               Browse All Courses
             </button>

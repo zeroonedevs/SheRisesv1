@@ -435,7 +435,19 @@ const Community = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <button className="btn btn-primary">
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    alert('Please login to start a discussion');
+                    navigate('/login');
+                  } else {
+                    // Scroll to new post form
+                    document.querySelector('.new-post-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.querySelector('.post-title-input')?.focus();
+                  }
+                }}
+              >
                 <Plus size={20} />
                 Start Discussion
               </button>
@@ -532,7 +544,24 @@ const Community = () => {
                         <MessageCircle size={16} />
                         {post.commentCount || post.comments?.length || 0}
                       </button>
-                      <button className="action-btn">
+                      <button 
+                        className="action-btn"
+                        onClick={() => {
+                          if (navigator.share) {
+                            navigator.share({
+                              title: post.title,
+                              text: post.content,
+                              url: window.location.origin + `/forum/${postId}`
+                            }).catch(() => {});
+                          } else {
+                            navigator.clipboard.writeText(window.location.origin + `/forum/${postId}`).then(() => {
+                              alert('Link copied to clipboard!');
+                            }).catch(() => {
+                              alert('Unable to copy link. Please share manually.');
+                            });
+                          }
+                        }}
+                      >
                         <Share2 size={16} />
                         Share
                       </button>
@@ -684,7 +713,19 @@ const Community = () => {
                       <div className="event-organizer">by {event.organizer}</div>
                       <div className="event-price">{event.price}</div>
                     </div>
-                    <button className="btn btn-primary">Register</button>
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          alert('Please login to register for events');
+                          navigate('/login');
+                        } else {
+                          alert(`Registration for "${event.title}" is not yet implemented. Coming soon!`);
+                        }
+                      }}
+                    >
+                      Register
+                    </button>
                   </div>
                 </div>
               ))}
