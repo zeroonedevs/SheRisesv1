@@ -274,7 +274,8 @@ const Layout = ({ children }) => {
             </div> */}
           </div>
           <div className="footer-bottom">
-            <p>&copy; 2024 SheRises. All rights reserved. Empowering women, building communities.</p>
+            <p>&copy; 2025 SheRises. All rights reserved. Empowering women, building communities.</p>
+            <p>Built and Developed by <a href="https://www.linkedin.com/in/kushaalbadavath/">Kushaal Badavath</a></p>
           </div>
         </div>
       </footer>

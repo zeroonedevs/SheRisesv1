@@ -137,7 +137,6 @@ const Admin = () => {
     setIsLoggedIn(false);
     setLoginForm({ username: '', password: '' });
     setActiveTab('dashboard');
-    // Clear admin token
     localStorage.removeItem('token');
     localStorage.removeItem('admin_user');
   };
